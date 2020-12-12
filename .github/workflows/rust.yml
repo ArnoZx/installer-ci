@@ -1,0 +1,31 @@
+on: push
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform:
+          [
+            { "name": "ubuntu-latest", "binary": "installer" },
+            { "name": "macos-latest", "binary": "installer" },
+            { "name": "windows-latest", "binary": "installer.exe" },
+          ]
+    runs-on: ${{ matrix.platform.name }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+        env:
+          RUSTFLAGS: "-Ctarget-feature=+crt-static -Zunstable-options"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: ${{ matrix.platform.name }}-tower-${{ matrix.platform.binary }}
+          path: target/release/${{ matrix.platform.binary }}
